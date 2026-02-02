@@ -8,4 +8,23 @@
   Run `npm i` to install the dependencies.
 
   Run `npm run dev` to start the development server.
-  
+
+Local dockerized setup (frontend + backend + Postgres)
+
+1. Copy env files:
+
+```powershell
+copy .env.example .env
+copy server/.env.example server/.env
+```
+
+2. Build and run with Docker Compose:
+
+```powershell
+docker compose build
+docker compose up
+```
+
+Frontend will be available at http://localhost:3000 and backend at http://localhost:4000/api
+
+Note: To push to GitHub, add your remote and push from your machine (this assistant cannot access your credentials).

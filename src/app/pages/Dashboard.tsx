@@ -22,6 +22,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useEffect, useState } from "react";
+import { getTransactions, Transaction } from "@/app/lib/api";
+import { postTransaction } from "@/app/lib/api";
 
 // Mock data
 const pendapatanPerUnit = [
@@ -41,7 +44,7 @@ const labaBulanan = [
   { bulan: "Jun", laba: 22000000 },
 ];
 
-const transaksiTerakhir = [
+const transaksiTerakhirMock = [
   {
     id: "TRX001",
     tanggal: "2026-02-02",
@@ -58,31 +61,36 @@ const transaksiTerakhir = [
     jumlah: 3500000,
     jenis: "keluar",
   },
-  {
-    id: "TRX003",
-    tanggal: "2026-02-01",
-    unit: "Air Bersih",
-    keterangan: "Pembayaran bulanan pelanggan",
-    jumlah: 2500000,
-    jenis: "masuk",
-  },
-  {
-    id: "TRX004",
-    tanggal: "2026-02-01",
-    unit: "Pertanian",
-    keterangan: "Penjualan hasil panen",
-    jumlah: 4200000,
-    jenis: "masuk",
-  },
-  {
-    id: "TRX005",
-    tanggal: "2026-01-31",
-    unit: "Pariwisata",
-    keterangan: "Pemeliharaan fasilitas",
-    jumlah: 1800000,
-    jenis: "keluar",
-  },
 ];
+
+function useTransactions() {
+  const [data, setData] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const refresh = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const rows = await getTransactions();
+      setData(rows);
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    refresh().catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  return { data, loading, error, refresh };
+}
+
 
 const notifikasi = [
   {
@@ -103,6 +111,18 @@ const notifikasi = [
 ];
 
 export default function Dashboard() {
+  const { data: transaksi, loading, error, refresh } = useTransactions();
+  const [showModal, setShowModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    trx_id: "",
+    tanggal: new Date().toISOString().slice(0, 10),
+    unit: "",
+    keterangan: "",
+    jumlah: "",
+    jenis: "masuk",
+  });
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -228,7 +248,7 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {transaksiTerakhir.map((trx) => (
+                    {(loading || transaksi.length === 0 ? transaksiTerakhirMock : transaksi).map((trx: any) => (
                     <tr key={trx.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {trx.id}
@@ -293,7 +313,10 @@ export default function Dashboard() {
                 Aksi Cepat
               </h2>
               <div className="space-y-2">
-                <button className="w-full flex items-center gap-3 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
                   <Plus className="w-5 h-5" />
                   <span>Tambah Transaksi</span>
                 </button>
@@ -306,6 +329,114 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Add Transaction Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Tambah Transaksi</h3>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setSubmitting(true);
+                setErrorMsg(null);
+                try {
+                  const payload: any = {
+                    trx_id: form.trx_id || `TRX${Date.now()}`,
+                    tanggal: form.tanggal,
+                    unit: form.unit,
+                    keterangan: form.keterangan,
+                    jumlah: Number(form.jumlah) || 0,
+                    jenis: form.jenis,
+                  };
+                  const created = await postTransaction(payload);
+                  // refresh list
+                  const fresh = await getTransactions();
+                  setForm({ trx_id: "", tanggal: "", unit: "", keterangan: "", jumlah: "", jenis: "masuk" });
+                  setShowModal(false);
+                } catch (err: any) {
+                  setErrorMsg(err?.message || String(err));
+                } finally {
+                  setSubmitting(false);
+                }
+              }}
+              className="space-y-3"
+            >
+              {errorMsg && <p className="text-sm text-red-600">{errorMsg}</p>}
+              <div>
+                <label className="text-sm text-gray-700">Tanggal</label>
+                <input
+                  type="date"
+                  value={form.tanggal}
+                  onChange={(e) => setForm({ ...form, tanggal: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 border rounded-lg"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-700">Unit Usaha</label>
+                <input
+                  type="text"
+                  value={form.unit}
+                  onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 border rounded-lg"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-700">Keterangan</label>
+                <input
+                  type="text"
+                  value={form.keterangan}
+                  onChange={(e) => setForm({ ...form, keterangan: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 border rounded-lg"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm text-gray-700">Jumlah</label>
+                  <input
+                    type="number"
+                    value={form.jumlah}
+                    onChange={(e) => setForm({ ...form, jumlah: e.target.value })}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-700">Jenis</label>
+                  <select
+                    value={form.jenis}
+                    onChange={(e) => setForm({ ...form, jenis: e.target.value })}
+                    className="w-full mt-1 px-3 py-2 border rounded-lg"
+                  >
+                    <option value="masuk">Masuk</option>
+                    <option value="keluar">Keluar</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 rounded-lg border"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-4 py-2 rounded-lg bg-green-600 text-white"
+                >
+                  {submitting ? "Menyimpan..." : "Simpan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

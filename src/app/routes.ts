@@ -14,6 +14,7 @@ import Laporan from "@/app/pages/Laporan";
 import Pengguna from "@/app/pages/Pengguna";
 import ProfilBumdes from "@/app/pages/ProfilBumdes";
 import Pengaturan from "@/app/pages/Pengaturan";
+import LandingPage from "@/app/pages/LandingPage";
 
 export const router = createBrowserRouter([
   {
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
       { path: "pengguna", Component: Pengguna },
       { path: "profil-bumdes", Component: ProfilBumdes },
       { path: "pengaturan", Component: Pengaturan },
+      { path: "landing", Component: LandingPage },
     ],
   },
 ]);
