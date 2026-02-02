@@ -1,3 +1,34 @@
+# Bumdes
+
+A simple admin dashboard and landing site for a village-owned enterprise (Bumdes).
+
+## Overview
+
+This repository contains a React + Vite application with an admin panel and a landing page.
+
+## Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run dev server:
+
+```bash
+npm run dev
+```
+
+Build:
+
+```bash
+npm run build
+```
+
+## License
+
+MIT
 
   # BUMDes
 
