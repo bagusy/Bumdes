@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router";
+import { useParams, Link } from "react-router-dom";
 import { useState } from "react";
 import TopBar from "@/app/components/TopBar";
 import { ArrowLeft, TrendingUp, DollarSign, Target, Users } from "lucide-react";

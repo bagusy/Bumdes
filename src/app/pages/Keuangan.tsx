@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import TopBar from "@/app/components/TopBar";
 import {
   Wallet,

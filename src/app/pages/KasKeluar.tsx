@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import TopBar from "@/app/components/TopBar";
 import { ArrowLeft, Upload, Save, Plus } from "lucide-react";
 
