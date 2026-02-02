@@ -1,0 +1,13 @@
+import { Outlet } from "react-router";
+import Sidebar from "@/app/components/Sidebar";
+
+export default function DashboardLayout() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Sidebar />
+      <main className="ml-64">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
